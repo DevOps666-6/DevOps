@@ -1,0 +1,14 @@
+# Image de base très légère
+FROM alpine:latest
+
+# Installer un serveur web simple (lighttpd)
+RUN apk add --no-cache lighttpd
+
+# Copier le fichier HTML dans le répertoire du serveur web
+COPY index.html /var/www/localhost/htdocs/index.html
+
+# Exposer le port 80
+EXPOSE 80
+
+# Démarrer le serveur
+CMD ["lighttpd", "-D", "-f", "/etc/lighttpd/lighttpd.conf"]
