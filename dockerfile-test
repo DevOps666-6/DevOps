@@ -5,7 +5,7 @@ FROM alpine:latest
 RUN apk add --no-cache lighttpd
 
 # Copier le fichier HTML dans le répertoire du serveur web
-COPY index.html /var/www/localhost/htdocs/index.html
+COPY ~/front/index.html /var/www/localhost/htdocs/index.html
 
 # Exposer le port 80
 EXPOSE 80
