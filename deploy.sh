@@ -1,32 +1,32 @@
 #!/bin/bash
 
-# Variables personnalisables
-CONTAINER_NAME="devops-lab"
-IMAGE_NAME="devops-lab_image"
+# === Config ===
+CONTAINER_NAME="my-web-app"   # Nom du conteneur
+IMAGE_NAME="my-web-app-image" # Nom de l'image Docker
+DOCKERFILE="dockerfile-test"  # Nom de ton Dockerfile
+PORT_HOST=8081                # Port sur ton serveur (ex: 8080)
+PORT_CONTAINER=80             # Port dans le conteneur (ex: 80 pour HTTP)
 
-echo "==> 🚀 Déploiement Docker commencé..."
-
-# Étape 1 : Stopper et supprimer l'ancien conteneur
-if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-    echo "==> 🛑 Arrêt de l'ancien conteneur..."
-    docker stop $CONTAINER_NAME
-    docker rm $CONTAINER_NAME
-else
-    echo "==> Aucun conteneur à arrêter."
+# === 1. Nettoyage de l'ancien conteneur ===
+echo "[1/3] Suppression de l'ancien conteneur..."
+if docker inspect $CONTAINER_NAME >/dev/null 2>&1; then
+    docker stop $CONTAINER_NAME || echo "⚠️ Échec de l'arrêt, mais on continue..."
+    docker rm $CONTAINER_NAME || { echo "❌ Impossible de supprimer le conteneur"; exit 1; }
 fi
 
-# Étape 2 : Supprimer l'image existante (optionnel, si tu veux repartir propre)
-if [ "$(docker images -q $IMAGE_NAME)" ]; then
-    echo "==> 🧼 Suppression de l'ancienne image..."
-    docker rmi $IMAGE_NAME
-fi
+# === 2. Build de l'image ===
+echo "[2/3] Construction de l'image Docker..."
+docker build -t $IMAGE_NAME -f $DOCKERFILE . || {
+    echo "❌ Échec du build Docker"; exit 1;
+}
 
-# Étape 3 : Rebuild de l’image Docker
-echo "==> 🔧 Build de la nouvelle image..."
-docker build -t $IMAGE_NAME .
+# === 3. Lancement du nouveau conteneur ===
+echo "[3/3] Démarrage du conteneur..."
+docker run -d \
+    --name $CONTAINER_NAME \
+    -p $PORT_HOST:$PORT_CONTAINER \
+    $IMAGE_NAME || { echo "❌ Échec du démarrage"; exit 1; }
 
-# Étape 4 : Lancer le nouveau conteneur
-echo "==> 🚀 Lancement du nouveau conteneur..."
-docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME
-
-echo "==> ✅ Déploiement terminé avec succès."
+# === Vérification finale ===
+echo "✅ Succès ! Conteneur démarré :"
+docker ps --filter "name=$CONTAINER_NAME" --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}"
